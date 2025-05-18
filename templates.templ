@@ -1,0 +1,245 @@
+package main
+
+import "github.com/a-h/templ"
+
+templ pageTemplate(siteName string, page Page, isAuthenticated bool) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>{ page.Title } - { siteName }</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>{ siteName }</h1>
+			<nav>
+				<a href="/">Home</a>
+				<a href="/about">About</a>
+				if isAuthenticated {
+					<a href="/content/create-page">Create Page</a>
+					<a href="/logout">Logout</a>
+				} else {
+					<a href="/login">Login</a>
+					<a href="/register">Register</a>
+				}
+			</nav>
+		</header>
+		<main>
+			<h2>{ page.Title }</h2>
+			<div class="content">
+				for _, element := range page.Elements {
+					switch element.Type {
+						case "text":
+							<p>{ element.Content["text"] }</p>
+						case "image":
+							<img src={ element.Content["src"] } alt={ element.Content["alt"] }>
+						case "button":
+							<a href={ element.Content["url"] } class="button">{ element.Content["text"] }</a>
+					}
+				}
+			</div>
+		</main>
+		<footer>
+			<p>© 2025 { siteName }</p>
+		</footer>
+	</body>
+	</html>
+}
+
+templ loginTemplate(errorMsg string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Login</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>Login</h1>
+		</header>
+		<main>
+			<form hx-post="/login" hx-target="#form-container" hx-swap="outerHTML">
+				<div id="form-container">
+					if errorMsg != "" {
+						<p class="error">{ errorMsg }</p>
+					}
+					<label for="username">Username:</label>
+					<input type="text" id="username" name="username" required>
+					<label for="password">Password:</label>
+					<input type="password" id="password" name="password" required>
+					<button type="submit">Login</button>
+				</div>
+			</form>
+			<p><a href="/register">Register</a></p>
+		</main>
+	</body>
+	</html>
+}
+
+templ registerTemplate(errorMsg string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Register</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>Register</h1>
+		</header>
+		<main>
+			<form hx-post="/register" hx-target="#form-container" hx-swap="outerHTML">
+				<div id="form-container">
+					if errorMsg != "" {
+						<p class="error">{ errorMsg }</p>
+					}
+					<label for="username">Username:</label>
+					<input type="text" id="username" name="username" required>
+					<label for="password">Password:</label>
+					<input type="password" id="password" name="password" required>
+					<label for="role">Role:</label>
+					<select id="role" name="role" required>
+						<option value="admin">Admin</option>
+						<option value="content-creator">Content Creator</option>
+					</select>
+					<button type="submit">Register</button>
+				</div>
+			</form>
+			<p><a href="/login">Login</a></p>
+		</main>
+	</body>
+	</html>
+}
+
+templ adminCreateSiteTemplate(errorMsg string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Create Site</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>Create New Site</h1>
+		</header>
+		<main>
+			<form hx-post="/admin/create-site" hx-target="#form-container" hx-swap="outerHTML">
+				<div id="form-container">
+					if errorMsg != "" {
+						<p class="error">{ errorMsg }</p>
+					}
+					<label for="name">Site Name:</label>
+					<input type="text" id="name" name="name" required>
+					<label for="domain">Domain (e.g., sitea.localhost):</label>
+					<input type="text" id="domain" name="domain" required>
+					<label for="content">Default Content:</label>
+					<textarea id="content" name="content"></textarea>
+					<button type="submit">Create Site</button>
+				</div>
+			</form>
+		</main>
+	</body>
+	</html>
+}
+
+templ adminCreatePageTemplate(siteName, errorMsg string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Create Page - { siteName }</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>Create New Page for { siteName }</h1>
+		</header>
+		<main>
+			<form hx-post="/content/create-page" hx-target="#form-container" hx-swap="outerHTML">
+				<div id="form-container">
+					if errorMsg != "" {
+						<p class="error">{ errorMsg }</p>
+					}
+					<label for="title">Page Title:</label>
+					<input type="text" id="title" name="title" required>
+					<label for="slug">Slug (e.g., about):</label>
+					<input type="text" id="slug" name="slug" required>
+					<button type="submit">Create Page</button>
+				</div>
+			</form>
+		</main>
+	</body>
+	</html>
+}
+
+templ adminCreateElementTemplate(siteName string, page Page, errorMsg string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Add Element to { page.Title } - { siteName }</title>
+		<link rel="stylesheet" href="/static/styles.css">
+		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+	</head>
+	<body>
+		<header>
+			<h1>Add Element to { page.Title } - { siteName }</h1>
+		</header>
+		<main>
+			<form hx-post={ "/content/pages/" + page.Slug + "/create-element" } hx-target="#form-container" hx-swap="outerHTML">
+				<div id="form-container">
+					if errorMsg != "" {
+						<p class="error">{ errorMsg }</p>
+					}
+					<label for="type">Element Type:</label>
+					<select id="type" name="type" required hx-get="/content/element-fields" hx-target="#element-fields" hx-trigger="change">
+						<option value="text">Text</option>
+						<option value="image">Image</option>
+						<option value="button">Button</option>
+					</select>
+					<label for="position">Position:</label>
+					<input type="number" id="position" name="position" min="1" required>
+					<div id="element-fields">
+						<label for="text">Text Content:</label>
+						<textarea id="text" name="text" required></textarea>
+					</div>
+					<button type="submit">Add Element</button>
+				</div>
+			</form>
+		</main>
+	</body>
+	</html>
+}
+
+templ elementFieldsTemplate(elementType string) {
+	switch elementType {
+		case "text":
+			<label for="text">Text Content:</label>
+			<textarea id="text" name="text" required></textarea>
+		case "image":
+			<label for="src">Image URL:</label>
+			<input type="text" id="src" name="src" required>
+			<label for="alt">Alt Text:</label>
+			<input type="text" id="alt" name="alt" required>
+		case "button":
+			<label for="text">Button Text:</label>
+			<input type="text" id="text" name="text" required>
+			<label for="url">Button URL:</label>
+			<input type="text" id="url" name="url" required>
+	}
+}
